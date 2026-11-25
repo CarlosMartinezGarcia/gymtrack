@@ -39,6 +39,8 @@ export interface Exercise extends Base, ExerciseTargets {
   notes?: string;
   /** Ejercicio de la biblioteca al que corresponde (músculos, técnica, alternativas). Opcional: los datos antiguos no lo tienen. */
   libraryId?: string | null;
+  /** 'cardio' = se registra por minutos e intensidad, no por peso y repeticiones (§14). Sin valor = fuerza. */
+  mode?: 'cardio' | null;
 }
 
 export interface Routine extends Base {
@@ -91,6 +93,11 @@ export interface WorkSet extends Base {
   rpe?: number | null;
   warmup: boolean;
   notes?: string;
+  // Solo cardio (§14). Campos opcionales: las series de fuerza no los tienen.
+  durationMin?: number | null;
+  cardioIntensity?: Intensity | null;
+  speedKmh?: number | null;
+  incline?: 'none' | 'low' | 'medium' | 'high' | null;
 }
 
 export interface BodyWeight extends Base {

@@ -1,3 +1,4 @@
+import { cardioPlacement, needsPlacement } from '../cardioPlace';
 import { useState } from 'react';
 import { all, get } from '../../data/store';
 import { exercises, routineExercises, suggestion } from '../../data/queries';
@@ -12,6 +13,7 @@ import { ExercisePicker } from '../components/ExercisePicker';
 import { fmt, fmtRest } from '../format';
 import { startRoutine } from '../startFlow';
 import { TargetsForm } from './Exercises';
+import { cardioPhases, isCardio, PHASE_LABEL } from '../../domain/cardio';
 
 export function Segment({ value }: { value: 'routines' | 'exercises' | 'library' }) {
   return (
@@ -83,6 +85,7 @@ export function RoutineEditor({ id }: { id: string }) {
       if (await attempt(() => A.deleteRoutine(id), 'Rutina eliminada')) go('/routines', true);
     }
   };
+  const phases = cardioPhases(list.map((x) => isCardio(get('exercises', x.exerciseId))));
   const duplicate = async () => {
     let nid = '';
     if (await attempt(async () => { nid = await A.duplicateRoutine(id); }, 'Rutina duplicada')) go(`/routines/${nid}`, true);
@@ -104,11 +107,14 @@ export function RoutineEditor({ id }: { id: string }) {
           onReorder={(from, to) => attempt(() => A.reorderRoutineExercises(reorder(list, from, to).map((x) => x.id)))}
           render={(re) => {
             const ex = get('exercises', re.exerciseId);
+            const phase = phases[list.indexOf(re)];
             return (
               <button className="row" style={{ background: 'none', border: 0, width: '100%', textAlign: 'left', minHeight: 48, padding: 0 }} onClick={() => setEditing(re)}>
                 <span className="grow">
                   <span className="ellipsis" style={{ display: 'block', fontWeight: 600 }}>{ex?.name}</span>
-                  <span className="small muted num">{re.sets} × {re.repMin}–{re.repMax}, +{fmt(re.increment)} {ex?.unit}, {fmtRest(re.restSec)}{re.progression.type === 'none' ? ', sin progresión' : ''}</span>
+                  {phase
+                    ? <span className="small muted">Cardio · {PHASE_LABEL[phase]}</span>
+                    : <span className="small muted num">{re.sets} × {re.repMin}–{re.repMax}, +{fmt(re.increment)} {ex?.unit}, {fmtRest(re.restSec)}{re.progression.type === 'none' ? ', sin progresión' : ''}</span>}
                 </span>
                 <Icon name="edit" size={18} />
               </button>
@@ -128,7 +134,7 @@ export function RoutineEditor({ id }: { id: string }) {
       <p className="tiny faint" style={{ marginTop: 12 }}>Cambiar la rutina no modifica los entrenamientos ya registrados.</p>
 
       {picker && <ExercisePicker exclude={list.map((x) => x.exerciseId)} onClose={() => setPicker(false)}
-        onPick={async (eid) => { setPicker(false); await attempt(() => A.addExerciseToRoutine(id, eid)); }} />}
+        onPick={async (eid) => { setPicker(false); if (!needsPlacement(eid, list.length > 0)) { const atStart = false; await attempt(() => A.addExerciseToRoutine(id, eid, atStart)); return; } const atStart = await cardioPlacement(); if (atStart != null) await attempt(() => A.addExerciseToRoutine(id, eid, atStart)); }} />}
       {editing && <RoutineExerciseSheet re={get('routineExercises', editing.id)!} onClose={() => setEditing(null)} />}
     </div>
   );
@@ -144,8 +150,12 @@ function RoutineExerciseSheet({ re, onClose }: { re: RoutineExercise; onClose: (
   const fromFicha = () => ex && setT({ sets: ex.sets, repMin: ex.repMin, repMax: ex.repMax, increment: ex.increment, restSec: ex.restSec, progression: ex.progression });
   return (
     <Sheet title={ex?.name} onClose={onClose}>
-      <p className="small muted">Parámetros de este ejercicio dentro de la rutina.</p>
-      <TargetsForm value={t} unit={ex?.unit ?? 'kg'} onChange={setT} />
+      {isCardio(ex)
+        ? <p className="small muted">Cardio: se apunta en minutos e intensidad durante el entrenamiento. Muévelo arriba o abajo en la lista para que sea calentamiento o enfriamiento.</p>
+        : <>
+          <p className="small muted">Parámetros de este ejercicio dentro de la rutina.</p>
+          <TargetsForm value={t} unit={ex?.unit ?? 'kg'} onChange={setT} />
+        </>}
       <div className="stack" style={{ marginTop: 16 }}>
         <button className="btn primary block" onClick={save}>Guardar</button>
         <div className="row">

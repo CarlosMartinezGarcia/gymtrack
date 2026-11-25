@@ -1,3 +1,4 @@
+import { cardioPlacement, needsPlacement } from '../cardioPlace';
 import { useEffect, useRef, useState } from 'react';
 import { activeSession, sessionExercises, setsOfSession, profile } from '../../data/queries';
 import * as A from '../../data/actions';
@@ -56,7 +57,7 @@ export function Workout() {
       <button className="btn block" style={{ marginTop: 4 }} onClick={() => setPicker(true)}><Icon name="plus" /> Añadir ejercicio</button>
       <p className="tiny faint center" style={{ marginTop: 16 }}>Cada cambio se guarda al momento en este dispositivo. Puedes cerrar la app y continuar después.</p>
 
-      {picker && <ExercisePicker onClose={() => setPicker(false)} onPick={async (id) => { setPicker(false); await attempt(() => A.addExerciseToSession(s.id, id)); }} />}
+      {picker && <ExercisePicker onClose={() => setPicker(false)} onPick={async (id) => { setPicker(false); if (!needsPlacement(id, list.length > 0)) { const atStart = false; await attempt(() => A.addExerciseToSession(s.id, id, atStart)); return; } const atStart = await cardioPlacement(); if (atStart != null) await attempt(() => A.addExerciseToSession(s.id, id, atStart)); }} />}
       {finishing && <FinishSheet sessionId={s.id} onClose={() => setFinishing(false)} />}
     </div>
   );

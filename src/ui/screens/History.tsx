@@ -1,3 +1,4 @@
+import { cardioPlacement, needsPlacement } from '../cardioPlace';
 import { useState } from 'react';
 import { all, get } from '../../data/store';
 import { sessionDuration, sessionExercises, sessionsSorted, setsOfSession } from '../../data/queries';
@@ -132,7 +133,7 @@ export function SessionDetail({ id }: { id: string }) {
         <button className="btn danger block" onClick={remove}><Icon name="trash" size={18} /> Eliminar sesión</button>
       </div>
 
-      {picker && <ExercisePicker onClose={() => setPicker(false)} onPick={async (eid) => { setPicker(false); await attempt(() => A.addExerciseToSession(id, eid)); }} />}
+      {picker && <ExercisePicker onClose={() => setPicker(false)} onPick={async (eid) => { setPicker(false); if (!needsPlacement(eid, sessionExercises(id).length > 0)) { const atStart = false; await attempt(() => A.addExerciseToSession(id, eid, atStart)); return; } const atStart = await cardioPlacement(); if (atStart != null) await attempt(() => A.addExerciseToSession(id, eid, atStart)); }} />}
     </div>
   );
 }

@@ -144,3 +144,12 @@ Se muestra siempre como **intervalo**. Se usa el peso corporal registrado más c
 - «Añadir a mis ejercicios» crea un ejercicio propio vinculado (o abre el que ya lo está). Si ya existe uno con el mismo nombre, se añade el sufijo «(biblioteca)».
 - **Alternativas** (para variar, no por lesión): mismo patrón de movimiento primero (+100), después músculos principales en común (+10 cada uno) y, a igualdad, material distinto (+1). Mínimo un músculo principal en común. El cardio solo se alterna con cardio. Máximo 6.
 - Tests: `tests/unit/library.test.ts`.
+
+## 14. Cardio
+
+- Un ejercicio es de cardio si su campo opcional `mode` vale `'cardio'` o si está vinculado a un cardio de la biblioteca (cinta, bicicleta, elíptica, remo, escaladora). Objetivos fijos: 1 tramo, sin descanso ni progresión.
+- Cada tramo es una fila de `sets` con campos opcionales nuevos: `durationMin` (minutos), `cardioIntensity` (baja, media, alta) y, solo en la cinta, `speedKmh` e `incline` (0, baja, media, alta). `weight` y `reps` quedan vacíos. Son campos nuevos y opcionales: los datos antiguos no necesitan migración.
+- **Nunca cuenta para fuerza**: al no tener peso ni repeticiones, un tramo no es una serie válida (§3), así que no entra en progresión, récords ni volumen. Una sesión solo de cardio no es una sesión válida y no avanza la secuencia.
+- Un tramo se completa con minutos > 0. Al empezar una sesión se precarga con los valores del último tramo hecho con ese ejercicio. Al finalizar la sesión, los tramos pendientes se eliminan aunque estén precargados.
+- **Fase según la posición** (no se guarda): antes del primer ejercicio de fuerza = calentamiento; después del último = enfriamiento; entre medias o en una sesión solo de cardio = cardio. Al añadir un cardio a una rutina o sesión con ejercicios, la app pregunta si va al principio o al final.
+- Tests: `tests/unit/cardio.test.ts`.

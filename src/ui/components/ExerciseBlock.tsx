@@ -1,7 +1,9 @@
 // Tarjeta de un ejercicio dentro de una sesión: se usa en el entrenamiento en curso y al editar el historial.
 import { useState } from 'react';
 import { get } from '../../data/store';
-import { previousPerformance, profile, recommendationFor, setsOf } from '../../data/queries';
+import { previousPerformance, profile, recommendationFor, sessionExercises, setsOf } from '../../data/queries';
+import { cardioLine, cardioMachine, cardioPhases, INCLINE_LABEL, INTENSITY_LABEL, isCardio, isDoneCardio, PHASE_LABEL, type Incline } from '../../domain/cardio';
+import type { Intensity } from '../../domain/types';
 import * as A from '../../data/actions';
 import type { SessionExercise, WorkSet } from '../../domain/types';
 import { ACTION_CLASS, fmt, fmtRest, relDay, setsLine } from '../format';
@@ -28,11 +30,14 @@ export function ExerciseBlock({ se, mode, open, onToggle, sessionStartedAt, isFi
   const work = sets.filter((s) => !s.warmup);
   const doneWork = work.filter((s) => s.status === 'done').length;
   const prev = previousPerformance(se.exerciseId, sessionStartedAt);
-  const rec = mode === 'live' ? recommendationFor(se.exerciseId, se, se.sessionId) : null;
+  const cardio = isCardio(ex);
+  const siblings = sessionExercises(se.sessionId);
+  const phase = cardio ? cardioPhases(siblings.map((x) => isCardio(get('exercises', x.exerciseId))))[siblings.findIndex((x) => x.id === se.id)] : null;
+  const rec = mode === 'live' && !cardio ? recommendationFor(se.exerciseId, se, se.sessionId) : null;
   const [picker, setPicker] = useState(false);
   const [notesOpen, setNotesOpen] = useState(!!se.notes);
   const [setSheet, setSetSheet] = useState<WorkSet | null>(null);
-  const complete = doneWork >= se.sets && work.length > 0 && work.every((s) => s.status === 'done');
+  const complete = cardio ? sets.length > 0 && sets.every(isDoneCardio) : doneWork >= se.sets && work.length > 0 && work.every((s) => s.status === 'done');
 
   const menu = async () => {
     const v = await choose(ex?.name ?? 'Ejercicio', [
@@ -68,17 +73,31 @@ export function ExerciseBlock({ se, mode, open, onToggle, sessionStartedAt, isFi
           <span className="chev"><Icon name="chevR" size={20} /></span>
           <span className="grow">
             <h3>{ex?.name ?? 'Ejercicio desconocido'}</h3>
-            <span className="small muted">{se.sets} × {se.repMin}–{se.repMax} reps, descanso {fmtRest(se.restSec)}</span>
+            {cardio
+              ? <span className="small muted">{sets.some(isDoneCardio) ? `${sets.filter(isDoneCardio).reduce((a, x) => a + (x.durationMin ?? 0), 0)} min hechos` : 'Minutos e intensidad'}</span>
+              : <span className="small muted">{se.sets} × {se.repMin}–{se.repMax} reps, descanso {fmtRest(se.restSec)}</span>}
           </span>
           <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-            <span className="ex-done-count">{doneWork}/{Math.max(se.sets, work.length)}</span>
+            {cardio ? <span className="badge blue">{phase ? PHASE_LABEL[phase] : 'Cardio'}</span> : <span className="ex-done-count">{doneWork}/{Math.max(se.sets, work.length)}</span>}
             {rec && <span className={`badge ${ACTION_CLASS[rec.action]}`}>{rec.action}</span>}
           </span>
         </button>
         <button className="icon-btn" style={{ marginTop: 8 }} onClick={menu} aria-label={`Opciones de ${ex?.name}`}><Icon name="dots" stroke={3} /></button>
       </div>
 
-      {open && (
+      {open && cardio && (
+        <div className="ex-body">
+          <div className="prev-line">
+            {prev && prev.sets.some(isDoneCardio) ? <>Última vez ({relDay(prev.session.startedAt)}): {prev.sets.filter(isDoneCardio).map(cardioLine).join(' + ')}</> : 'Primera vez con este cardio.'}
+          </div>
+          {sets.map((s, i) => <CardioRow key={s.id} set={s} n={i + 1} treadmill={cardioMachine(ex) === 'treadmill'} />)}
+          <div className="ex-actions">
+            <button className="btn sm" onClick={() => attempt(() => A.addSet(se.id))}><Icon name="plus" size={18} /> Añadir tramo</button>
+          </div>
+        </div>
+      )}
+
+      {open && !cardio && (
         <div className="ex-body">
           <div className="prev-line">
             {prev ? <>Última vez ({relDay(prev.session.startedAt)}): <span className="num">{setsLine(prev.sets)}</span> {unit}</> : 'Primera vez con este ejercicio.'}
@@ -167,5 +186,38 @@ function SetSheet({ set, onClose }: { set: WorkSet; onClose: () => void }) {
         <button className="btn danger block" onClick={remove}><Icon name="trash" size={18} /> Eliminar serie</button>
       </div>
     </Sheet>
+  );
+}
+
+/** Un tramo de cardio: minutos e intensidad; en la cinta, velocidad e inclinación (§14). */
+function CardioRow({ set: s, n, treadmill }: { set: WorkSet; n: number; treadmill: boolean }) {
+  const done = s.status === 'done';
+  const up = (patch: Partial<WorkSet>) => attempt(() => A.updateSet(s.id, patch));
+  const toggle = () => done ? attempt(() => A.uncompleteSet(s.id)) : attempt(() => A.completeSet(s.id));
+  return (
+    <div className={`cardio-row${done ? ' done' : ''}`}>
+      <div className="row" style={{ alignItems: 'flex-end' }}>
+        <div className="grow"><span className="tiny muted">Minutos</span>
+          <Stepper label={`minutos tramo ${n}`} value={s.durationMin ?? null} step={1} decimals={false} onChange={(v) => up({ durationMin: v })} /></div>
+        {treadmill && <div className="grow"><span className="tiny muted">Velocidad (km/h)</span>
+          <Stepper label={`velocidad tramo ${n}`} value={s.speedKmh ?? null} step={0.5} onChange={(v) => up({ speedKmh: v })} /></div>}
+        <button className="check" onClick={toggle} aria-label={done ? `Tramo ${n} hecho; tocar para desmarcar` : `Completar tramo ${n}`} aria-pressed={done}>
+          <Icon name="check" size={26} stroke={3} />
+        </button>
+      </div>
+      <span className="tiny muted">Intensidad</span>
+      <div className="chips" style={{ margin: '4px 0 8px' }}>
+        {(Object.keys(INTENSITY_LABEL) as Intensity[]).map((k) => <button key={k} className={`chip${s.cardioIntensity === k ? ' on' : ''}`} onClick={() => up({ cardioIntensity: s.cardioIntensity === k ? null : k })}>{INTENSITY_LABEL[k]}</button>)}
+      </div>
+      {treadmill && (
+        <>
+          <span className="tiny muted">Inclinación</span>
+          <div className="chips" style={{ margin: '4px 0 8px' }}>
+            {(Object.keys(INCLINE_LABEL) as Incline[]).map((k) => <button key={k} className={`chip${s.incline === k ? ' on' : ''}`} onClick={() => up({ incline: s.incline === k ? null : k })}>{INCLINE_LABEL[k]}</button>)}
+          </div>
+        </>
+      )}
+      {n > 1 && <button className="btn sm danger" onClick={async () => { if (await confirm('¿Eliminar este tramo?')) await attempt(() => A.deleteSet(s.id)); }}>Eliminar tramo</button>}
+    </div>
   );
 }

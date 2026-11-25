@@ -1,3 +1,4 @@
+import { cardioLine, isCardio, isDoneCardio } from '../../domain/cardio';
 import { all, get } from '../../data/store';
 import { history, sessionDuration, sessionExercises, setsOf, recommendationFor } from '../../data/queries';
 import { updateSession } from '../../data/actions';
@@ -53,7 +54,7 @@ export function Summary({ id }: { id: string }) {
         return (
           <div key={se.id} className="card">
             <div className="row spread"><h3>{ex?.name}</h3>{prs.length > 0 && <span className="badge pr"><Icon name="star" fill size={13} /> {prs.length} récord{prs.length > 1 ? 's' : ''}</span>}</div>
-            <p className="small muted num" style={{ margin: '4px 0 8px' }}>{done.length ? `${setsLine(done)} ${unit}` : 'Sin series válidas'}</p>
+            <p className="small muted num" style={{ margin: '4px 0 8px' }}>{isCardio(ex) ? (setsOf(se.id).filter(isDoneCardio).map(cardioLine).join(' + ') || 'Sin tramos hechos') : done.length ? `${setsLine(done)} ${unit}` : 'Sin series válidas'}</p>
             {cur && prev && (
               <div className="small">
                 <div className="kv"><span>Carga máxima</span><span className="num">{fmt(prev.topLoad)} → {fmt(cur.topLoad)} {unit}</span></div>

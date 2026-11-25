@@ -248,3 +248,8 @@ details.why summary::-webkit-details-marker { display: none; }
 .lib-steps { margin: 0; padding: 14px 16px 14px 36px; }
 .lib-steps li + li { margin-top: 6px; }
 .lib-link { display: flex; align-items: center; gap: 10px; }
+
+/* Cardio */
+.cardio-row { padding: 10px 0; }
+.cardio-row + .cardio-row { border-top: 1px solid var(--iron-3); }
+.cardio-row.done .check { background: var(--green); color: var(--iron); border-color: var(--green); }
