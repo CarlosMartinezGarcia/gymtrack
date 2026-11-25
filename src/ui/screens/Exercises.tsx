@@ -8,6 +8,25 @@ import { attempt, confirm } from '../components/Dialogs';
 import { Icon } from '../components/Icon';
 import { Segment } from './Routines';
 import { parseNum, relDay } from '../format';
+import { LIBRARY, libraryExercise, matchByName } from '../../domain/library';
+
+/** Vincula el ejercicio con la biblioteca (músculos, técnica y alternativas). */
+function LibraryLink({ libraryId, name, onChange }: { libraryId: string | null; name: string; onChange: (id: string | null) => void }) {
+  const lib = libraryExercise(libraryId);
+  const guess = !lib ? matchByName(name) : undefined;
+  return (
+    <div className="stack" style={{ gap: 6 }}>
+      <label className="field"><span>Ejercicio de la biblioteca</span>
+        <select className="input" value={libraryId ?? ''} onChange={(e) => onChange(e.target.value || null)}>
+          <option value="">Sin vincular</option>
+          {[...LIBRARY].sort((a, b) => a.name.localeCompare(b.name, 'es')).map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
+        </select></label>
+      {lib && <button type="button" className="btn sm" onClick={() => go(`/library/${lib.id}`)}>Ver técnica y alternativas</button>}
+      {guess && <button type="button" className="btn sm" onClick={() => onChange(guess.id)}>¿Es «{guess.name}»? Vincular</button>}
+      <p className="tiny muted">Vincularlo da músculos, técnica y alternativas. No cambia tu historial. Pulsa Guardar después.</p>
+    </div>
+  );
+}
 
 export const KIND_LABEL: Record<ExerciseKind, string> = {
   free: 'Peso libre', machine: 'Máquina', cable: 'Polea', bodyweight: 'Peso corporal', assisted: 'Asistido', other: 'Otro',
@@ -133,6 +152,7 @@ export function ExerciseEditor({ id }: { id: string }) {
               {Object.entries(KIND_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
             </select></label>
         </div>
+        <LibraryLink libraryId={v.libraryId ?? null} name={v.name} onChange={(libraryId) => set({ libraryId })} />
         <label className="field"><span>Unidad de carga</span>
           <select className="input" value={v.unit} onChange={(e) => set({ unit: e.target.value as LoadUnit })}><option value="kg">kg</option><option value="lb">lb</option></select></label>
         {(v.kind === 'bodyweight' || v.kind === 'assisted') && <p className="notice small">En este tipo de ejercicio registra solo la carga añadida (0 si no hay). El volumen y el 1RM estimado no incluyen tu peso corporal y no son comparables con ejercicios con carga externa.</p>}

@@ -13,11 +13,12 @@ import { fmt, fmtRest } from '../format';
 import { startRoutine } from '../startFlow';
 import { TargetsForm } from './Exercises';
 
-export function Segment({ value }: { value: 'routines' | 'exercises' }) {
+export function Segment({ value }: { value: 'routines' | 'exercises' | 'library' }) {
   return (
     <div className="segmented" role="tablist">
       <button className={value === 'routines' ? 'on' : ''} role="tab" aria-selected={value === 'routines'} onClick={() => go('/routines', true)}>Rutinas</button>
       <button className={value === 'exercises' ? 'on' : ''} role="tab" aria-selected={value === 'exercises'} onClick={() => go('/exercises', true)}>Ejercicios</button>
+      <button className={value === 'library' ? 'on' : ''} role="tab" aria-selected={value === 'library'} onClick={() => go('/library', true)}>Biblioteca</button>
     </div>
   );
 }

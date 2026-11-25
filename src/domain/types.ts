@@ -37,6 +37,8 @@ export interface Exercise extends Base, ExerciseTargets {
   kind: ExerciseKind;
   unit: LoadUnit;
   notes?: string;
+  /** Ejercicio de la biblioteca al que corresponde (músculos, técnica, alternativas). Opcional: los datos antiguos no lo tienen. */
+  libraryId?: string | null;
 }
 
 export interface Routine extends Base {

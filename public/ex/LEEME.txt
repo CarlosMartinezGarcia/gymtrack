@@ -1,0 +1,2 @@
+Imágenes de Free Exercise DB (https://github.com/yuhonas/free-exercise-db), dominio público (Unlicense).
+Reducidas a 480 px. El service worker las precarga para usarlas sin conexión en el gimnasio.

@@ -1,4 +1,5 @@
 // Operaciones de escritura. Cada operación compuesta se guarda en una sola transacción.
+import { libraryExercise, MUSCLE_BY_ID } from '../domain/library';
 import { commit, del, get, all, uuid, type Change } from './store';
 import { DEFAULT_PROGRESSION, type Exercise, type ExerciseTargets, type Profile, type Routine, type RoutineExercise, type Session, type SessionExercise, type SessionStatus, type WorkSet, type BodyWeight } from '../domain/types';
 import { PROFILE_ID, byPos, previousPerformance, routineExercises, sessionExercises, setsOf, setsOfSession, profile, targetsFromExercise, recommendationFor } from './queries';
@@ -38,6 +39,25 @@ export async function saveExercise(input: ExerciseInput & { id?: string }): Prom
   if (dupe) throw new Error(`Ya existe un ejercicio llamado «${dupe.name}».`);
   const [row] = await commit([{ t: 'exercises', row: { ...input, name: input.name.trim() } }]);
   return row as Exercise;
+}
+
+/** Crea un ejercicio propio a partir de la biblioteca (o devuelve el que ya está vinculado). */
+export async function addFromLibrary(libraryId: string): Promise<string> {
+  const lib = libraryExercise(libraryId);
+  if (!lib) throw new Error('Ejercicio de la biblioteca no encontrado.');
+  const linked = all('exercises').find((e) => !e.deletedAt && e.libraryId === libraryId);
+  if (linked) return linked.id;
+  let name = lib.name;
+  if (all('exercises').some((e) => e.name.trim().toLowerCase() === name.toLowerCase())) name = `${name} (biblioteca)`;
+  const iso = lib.met <= 3.5;
+  const kind: Exercise['kind'] = lib.equipment === 'machine' ? 'machine' : lib.equipment === 'cable' ? 'cable' : lib.equipment === 'bodyweight' ? 'bodyweight' : lib.equipment === 'cardio' ? 'other' : 'free';
+  const row = await saveExercise({
+    ...newExerciseDefaults(), name, kind, libraryId,
+    muscleGroup: lib.equipment === 'cardio' ? 'Cardio' : MUSCLE_BY_ID[lib.primary[0]].group,
+    repMin: iso ? 10 : 8, repMax: iso ? 15 : 12,
+    increment: lib.equipment === 'dumbbell' ? 2 : 2.5,
+  });
+  return row.id;
 }
 
 /** Oculta el ejercicio del catálogo y de las rutinas. Su historial se conserva. */

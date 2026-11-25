@@ -239,3 +239,12 @@ details.why summary::-webkit-details-marker { display: none; }
   h1 { font-size: 25px; }
   .stat .v { font-size: 22px; }
 }
+
+/* Biblioteca de ejercicios */
+.lib-item { padding-top: 10px; padding-bottom: 10px; }
+.lib-thumb { width: 52px; height: 40px; border-radius: 8px; object-fit: cover; background: var(--iron-3); flex: none; }
+.lib-frames { position: relative; aspect-ratio: 3 / 2; border-radius: var(--radius-l); overflow: hidden; background: #fff; }
+.lib-frames img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; transition: opacity .35s; }
+.lib-steps { margin: 0; padding: 14px 16px 14px 36px; }
+.lib-steps li + li { margin-top: 6px; }
+.lib-link { display: flex; align-items: center; gap: 10px; }
