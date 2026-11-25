@@ -16,6 +16,7 @@ import { TargetsForm } from './Exercises';
 import { cardioPhases, isCardio, PHASE_LABEL } from '../../domain/cardio';
 import { muscleLoad } from '../../domain/muscleMap';
 import { BodyMap } from '../components/BodyMap';
+import { TemplateSection } from './Templates';
 
 export function Segment({ value }: { value: 'routines' | 'exercises' | 'library' }) {
   return (
@@ -41,6 +42,7 @@ export function RoutineList() {
     <div>
       <div className="topbar"><h1>Rutinas</h1><button className="btn primary sm" onClick={() => setCreating(true)}><Icon name="plus" size={18} /> Nueva</button></div>
       <Segment value="routines" />
+      <div className="section-title" style={{ marginTop: 6 }}>Mis rutinas</div>
       {routines.length ? (
         <>
           <p className="small muted" style={{ margin: '0 4px 10px' }}>El orden es tu secuencia de entrenamiento: después de la última se vuelve a la primera. Arrastra desde el asa o usa las flechas.</p>
@@ -59,10 +61,11 @@ export function RoutineList() {
       ) : (
         <div className="card empty">
           <h3>Sin rutinas</h3>
-          <p>Crea rutinas como «A — Torso» o «B — Pierna». Se sugerirán en orden.</p>
+          <p>Crea rutinas como «A — Torso» o «B — Pierna», o usa una de las predefinidas de abajo. Se sugerirán en orden.</p>
           <button className="btn primary" onClick={() => setCreating(true)}>Crear rutina</button>
         </div>
       )}
+      <TemplateSection />
       {creating && (
         <Sheet title="Nueva rutina" onClose={() => setCreating(false)}>
           <input className="input" autoFocus placeholder="Nombre, por ejemplo A — Torso" value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void create(); }} />

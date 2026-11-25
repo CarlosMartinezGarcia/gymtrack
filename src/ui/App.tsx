@@ -10,6 +10,7 @@ import { Summary } from './screens/Summary';
 import { RoutineEditor, RoutineList } from './screens/Routines';
 import { ExerciseEditor, ExerciseList } from './screens/Exercises';
 import { LibraryDetail, LibraryList } from './screens/Library';
+import { TemplateDetail } from './screens/Templates';
 import { HistoryList, SessionDetail } from './screens/History';
 import { ExerciseProgress, ProgressList } from './screens/Progress';
 import { Bodyweight } from './screens/Bodyweight';
@@ -18,7 +19,7 @@ import { fmtClock } from './format';
 
 const TABS = [
   { path: '/', label: 'Inicio', icon: 'home', match: ['', 'settings'] },
-  { path: '/routines', label: 'Rutinas', icon: 'list', match: ['routines', 'exercises', 'library'] },
+  { path: '/routines', label: 'Rutinas', icon: 'list', match: ['routines', 'exercises', 'library', 'templates'] },
   { path: '/history', label: 'Historial', icon: 'clock', match: ['history', 'summary'] },
   { path: '/progress', label: 'Progreso', icon: 'chart', match: ['progress'] },
   { path: '/weight', label: 'Peso', icon: 'scale', match: ['weight'] },
@@ -32,6 +33,7 @@ function Screen({ parts }: { parts: string[] }) {
     case 'summary': return <Summary id={b} />;
     case 'routines': return b ? <RoutineEditor id={b} /> : <RoutineList />;
     case 'exercises': return b ? <ExerciseEditor id={b} key={b} /> : <ExerciseList />;
+    case 'templates': return <TemplateDetail id={b} key={b} />;
     case 'library': return b ? <LibraryDetail id={b} key={b} /> : <LibraryList />;
     case 'history': return b ? <SessionDetail id={b} key={b} /> : <HistoryList />;
     case 'progress': return b ? <ExerciseProgress id={b} key={b} /> : <ProgressList />;

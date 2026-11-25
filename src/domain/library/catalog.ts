@@ -87,7 +87,7 @@ export const LIBRARY: LibraryExercise[] = [
     errors: ['Banco mal colocado: la barra cae en el cuello o en el abdomen.'],
   },
   {
-    id: 'contractor-pecho', name: 'Contractor de pecho (pec deck)', aliases: ['mariposas de pecho', 'mariposa', 'pec deck', 'contractor', 'aperturas maquina'],
+    id: 'contractor-pecho', name: 'Mariposa de pecho (contractor)', aliases: ['mariposas de pecho', 'mariposa', 'contractor de pecho', 'pec deck', 'contractor', 'aperturas maquina'],
     equipment: 'machine', pattern: 'aperturas', primary: ['pecho'], secondary: ['deltoide_anterior'], met: ISO, img: 'Butterfly',
     setup: ['Asiento con las asas a la altura del pecho.', 'Espalda pegada al respaldo, hombros atrás.'],
     technique: ['Junta las asas delante del pecho con los codos ligeramente flexionados.', 'Abre despacio hasta notar estiramiento, sin pasar de la línea del cuerpo.'],
@@ -130,7 +130,7 @@ export const LIBRARY: LibraryExercise[] = [
   },
   // ---------------- Espalda ----------------
   {
-    id: 'jalon-pecho', name: 'Jalón al pecho', aliases: ['jalon', 'lat pulldown', 'pulldown', 'jalon al pecho', 'polea al pecho'],
+    id: 'jalon-pecho', name: 'Jalón al pecho', aliases: ['jalon al pecho', 'jalon', 'lat pulldown', 'lat machine', 'polea al pecho'],
     equipment: 'cable', pattern: 'tiron_vertical', primary: ['dorsal'], secondary: ['biceps', 'espalda_media', 'deltoide_posterior'], met: UPPER, img: 'Wide-Grip_Lat_Pulldown',
     setup: ['Ajusta el rodillo para que sujete bien los muslos.', 'Agarre algo más ancho que los hombros.'],
     technique: ['Saca el pecho y lleva la barra a la parte alta del pecho tirando con los codos.', 'Sube controlado hasta estirar los brazos.'],
@@ -144,7 +144,7 @@ export const LIBRARY: LibraryExercise[] = [
     errors: ['Balancear el tronco.'],
   },
   {
-    id: 'jalon-maquina', name: 'Jalón en máquina (palanca)', aliases: ['pulldown maquina', 'jalon maquina', 'high row'],
+    id: 'jalon-maquina', name: 'Pulldown en máquina (jalón de palanca)', aliases: ['pulldown', 'pull down', 'pulldown maquina', 'jalon maquina', 'jalon en maquina', 'high row', 'remo alto'],
     equipment: 'machine', pattern: 'tiron_vertical', primary: ['dorsal'], secondary: ['biceps', 'espalda_media'], met: UPPER, img: 'Leverage_High_Row',
     setup: ['Asiento con las asas al alcance con los brazos estirados.', 'Muslos sujetos bajo el rodillo.'],
     technique: ['Tira hacia abajo con los codos hacia las costillas.', 'Sube despacio.'],
@@ -158,18 +158,32 @@ export const LIBRARY: LibraryExercise[] = [
     errors: ['Medio recorrido.'],
   },
   {
-    id: 'remo-polea-baja', name: 'Remo en polea baja', aliases: ['remo horizontal', 'remo sentado', 'seated row', 'remo polea'],
+    id: 'remo-polea-baja', name: 'Remo en polea baja', aliases: ['remo gironda', 'remo sentado', 'seated row', 'remo polea'],
     equipment: 'cable', pattern: 'tiron_horizontal', primary: ['espalda_media', 'dorsal'], secondary: ['biceps', 'deltoide_posterior', 'trapecio'], met: UPPER, img: 'Seated_Cable_Rows',
     setup: ['Pies en la plataforma, rodillas algo flexionadas.', 'Espalda recta, pecho alto.'],
     technique: ['Tira llevando el agarre al abdomen y juntando escápulas.', 'Vuelve estirando los brazos sin redondear la espalda.'],
     errors: ['Balancear el tronco adelante y atrás.'],
   },
   {
-    id: 'remo-maquina', name: 'Remo en máquina', aliases: ['remo maquina', 'row machine', 'remo con apoyo'],
+    id: 'remo-maquina', name: 'Remo horizontal en máquina', aliases: ['remo horizontal', 'remo en maquina', 'remo maquina', 'row machine', 'remo con apoyo', 'remo horizontal maquina', 'seated row machine'],
     equipment: 'machine', pattern: 'tiron_horizontal', primary: ['espalda_media', 'dorsal'], secondary: ['biceps', 'deltoide_posterior'], met: UPPER, img: 'Leverage_Iso_Row',
     setup: ['Pecho apoyado en el soporte.', 'Asiento con las asas a la altura del pecho bajo.'],
     technique: ['Tira con los codos hacia atrás, junta escápulas.', 'Vuelve despacio.'],
     errors: ['Separar el pecho del soporte.'],
+  },
+  {
+    id: 'remo-bajo-maquina', name: 'Remo bajo en máquina (low row)', aliases: ['low row', 'remo bajo', 'remo bajo maquina'],
+    equipment: 'machine', pattern: 'tiron_horizontal', primary: ['dorsal', 'espalda_media'], secondary: ['biceps', 'deltoide_posterior'], met: UPPER, img: 'Seated_Cable_Rows',
+    setup: ['Pecho contra el apoyo y pies firmes.', 'Asas por debajo de la altura del pecho, brazos estirados.'],
+    technique: ['Tira de abajo hacia la cadera con los codos pegados.', 'Junta escápulas al final y vuelve despacio.'],
+    errors: ['Encoger los hombros hacia las orejas.'],
+  },
+  {
+    id: 'remo-t-apoyo', name: 'Remo en T con apoyo', aliases: ['remo en t', 'remo t', 't bar row', 'remo en t con apoyo de pecho'],
+    equipment: 'machine', pattern: 'tiron_horizontal', primary: ['espalda_media', 'dorsal'], secondary: ['biceps', 'deltoide_posterior', 'trapecio'], met: UPPER, img: 'Lying_T-Bar_Row',
+    setup: ['Pecho y abdomen sobre el apoyo inclinado.', 'Pies firmes en la plataforma.'],
+    technique: ['Sube las asas llevando los codos atrás.', 'Baja hasta estirar sin perder el apoyo.'],
+    errors: ['Despegar el pecho para dar tirón.'],
   },
   {
     id: 'remo-mancuerna', name: 'Remo con mancuerna a una mano', aliases: ['remo mancuerna', 'one arm row'],
@@ -250,7 +264,7 @@ export const LIBRARY: LibraryExercise[] = [
     errors: ['Coger impulso con la espalda.'],
   },
   {
-    id: 'contractor-inverso', name: 'Contractor inverso (deltoide posterior)', aliases: ['mariposas espalda', 'mariposa inversa', 'reverse fly', 'pajaros maquina', 'peck deck inverso'],
+    id: 'contractor-inverso', name: 'Mariposa inversa (contractor inverso)', aliases: ['mariposas espalda', 'mariposa de espalda', 'contractor inverso', 'mariposa inversa', 'reverse fly', 'pajaros maquina', 'peck deck inverso'],
     equipment: 'machine', pattern: 'deltoide_posterior', primary: ['deltoide_posterior'], secondary: ['espalda_media', 'trapecio'], met: ISO, img: 'Reverse_Machine_Flyes',
     setup: ['Siéntate mirando al respaldo, pecho apoyado.', 'Asas a la altura de los hombros.'],
     technique: ['Abre los brazos hacia atrás con los codos algo flexionados.', 'Vuelve despacio.'],

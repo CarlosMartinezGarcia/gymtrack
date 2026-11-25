@@ -1,6 +1,7 @@
 // Operaciones de escritura. Cada operación compuesta se guarda en una sola transacción.
 import { libraryExercise, MUSCLE_BY_ID } from '../domain/library';
 import { isCardio, isDoneCardio, validateCardio } from '../domain/cardio';
+import { TEMPLATE_BY_ID, freeRoutineName, resolveExercise } from '../domain/templates';
 import { commit, del, get, all, uuid, type Change } from './store';
 import { DEFAULT_PROGRESSION, type Exercise, type ExerciseTargets, type Profile, type Routine, type RoutineExercise, type Session, type SessionExercise, type SessionStatus, type WorkSet, type BodyWeight } from '../domain/types';
 import { PROFILE_ID, byPos, previousPerformance, routineExercises, sessionExercises, setsOf, setsOfSession, profile, targetsFromExercise, recommendationFor } from './queries';
@@ -125,6 +126,26 @@ export async function duplicateRoutine(id: string): Promise<string> {
   }
   await commit(changes);
   return newId;
+}
+
+/** Copia una rutina predefinida como rutina propia, al final de la secuencia (§17). Devuelve el id de la rutina nueva. */
+export async function createRoutineFromTemplate(templateId: string): Promise<string> {
+  const tpl = TEMPLATE_BY_ID.get(templateId);
+  if (!tpl) throw new Error('Rutina predefinida no encontrada.');
+  const ids: string[] = [];
+  for (const item of tpl.items) ids.push(resolveExercise(item.lib, all('exercises')) ?? await addFromLibrary(item.lib));
+  const routineId = uuid();
+  const position = Math.max(-1, ...all('routines').filter((r) => !r.deletedAt).map((x) => x.position)) + 1;
+  const name = freeRoutineName(tpl.name, all('routines').filter((r) => !r.deletedAt).map((r) => r.name));
+  const changes: Change[] = [{ t: 'routines', row: { id: routineId, name, description: tpl.description, position } }];
+  tpl.items.forEach((item, i) => {
+    const e = get('exercises', ids[i])!;
+    const base = targetsFromExercise(e);
+    const targets = isCardio(e) ? base : { ...base, sets: item.sets, repMin: item.reps[0], repMax: item.reps[1], restSec: item.restSec };
+    changes.push({ t: 'routineExercises', row: { routineId, exerciseId: e.id, position: i, ...targets } });
+  });
+  await commit(changes);
+  return routineId;
 }
 
 /** Borra la rutina. Las sesiones realizadas con ella se conservan intactas. */
