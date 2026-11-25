@@ -35,6 +35,12 @@ export function searchLibrary(f: LibraryFilter = {}): LibraryExercise[] {
   });
 }
 
+/** Entradas de la biblioteca que ofrece «Añadir ejercicio»: las que coinciden con la búsqueda y aún no están vinculadas a un ejercicio propio. */
+export function pickableLibrary(q: string, linkedIds: Iterable<string | null | undefined>): LibraryExercise[] {
+  const linked = new Set(linkedIds);
+  return searchLibrary({ q }).filter((e) => !linked.has(e.id));
+}
+
 /**
  * Sugiere el ejercicio de la biblioteca que corresponde a un nombre escrito por el usuario.
  * Coincidencia exacta con el nombre o un alias (sin tildes ni mayúsculas); si no, el alias más largo contenido en el nombre.

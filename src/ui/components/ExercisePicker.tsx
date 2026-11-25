@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { exercises } from '../../data/queries';
-import { newExerciseDefaults, saveExercise } from '../../data/actions';
+import { addFromLibrary, newExerciseDefaults, saveExercise } from '../../data/actions';
+import { EQUIPMENT_LABEL, imageUrl, pickableLibrary } from '../../domain/library';
 import { Sheet, attempt } from './Dialogs';
 import { Icon } from './Icon';
 
@@ -9,6 +10,8 @@ export function ExercisePicker({ title = 'Añadir ejercicio', exclude = [], onPi
   const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   const list = exercises().filter((e) => !exclude.includes(e.id) && norm(`${e.name} ${e.muscleGroup ?? ''}`).includes(norm(q)));
   const exact = exercises().some((e) => norm(e.name) === norm(q.trim()));
+  const lib = pickableLibrary(q, exercises().map((e) => e.libraryId));
+  const fromLibrary = (libId: string) => attempt(async () => onPick(await addFromLibrary(libId)));
   const create = () => attempt(async () => {
     const e = await saveExercise({ ...newExerciseDefaults(), name: q.trim() });
     onPick(e.id);
@@ -29,7 +32,14 @@ export function ExercisePicker({ title = 'Añadir ejercicio', exclude = [], onPi
             <Icon name="plus" />
           </button>
         ))}
-        {!list.length && !q.trim() && <div className="empty small">Aún no hay ejercicios. Escribe un nombre para crear el primero.</div>}
+        {list.length > 0 && lib.length > 0 && <div className="picker-sep">Biblioteca</div>}
+        {lib.map((e) => (
+          <button key={e.id} className="list-item lib-item" onClick={() => fromLibrary(e.id)}>
+            {imageUrl(e) ? <img className="lib-thumb" src={imageUrl(e)!} alt="" loading="lazy" /> : <span className="lib-thumb" />}
+            <span className="grow">{e.name}<br /><span className="tiny muted">{EQUIPMENT_LABEL[e.equipment]}</span></span>
+            <Icon name="plus" />
+          </button>
+        ))}
       </div>
     </Sheet>
   );

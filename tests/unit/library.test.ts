@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { LIBRARY, MUSCLE_BY_ID, alternatives, matchByName, searchLibrary, libraryExercise } from '../../src/domain/library';
+import { LIBRARY, MUSCLE_BY_ID, alternatives, matchByName, searchLibrary, libraryExercise, pickableLibrary } from '../../src/domain/library';
 
 test('biblioteca: ids únicos, músculos válidos y textos completos', () => {
   const ids = new Set<string>();
@@ -55,4 +55,14 @@ test('búsqueda: sin tildes, por alias, grupo y material', () => {
   assert.ok(searchLibrary({ group: 'Cardio' }).every((e) => e.equipment === 'cardio'));
   assert.ok(searchLibrary({ equipment: 'machine' }).every((e) => e.equipment === 'machine'));
   assert.equal(libraryExercise(undefined), undefined);
+});
+
+test('«Añadir ejercicio» ofrece la biblioteca sin las entradas ya vinculadas', () => {
+  const all = pickableLibrary('', []);
+  assert.equal(all.length, LIBRARY.length);
+  const first = all[0].id;
+  const rest = pickableLibrary('', [first, null, undefined]);
+  assert.equal(rest.length, LIBRARY.length - 1);
+  assert.ok(!rest.some((e) => e.id === first));
+  assert.ok(pickableLibrary('jalon', []).length > 0);
 });
