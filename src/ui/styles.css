@@ -329,3 +329,6 @@ h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; }
 .topbar h1 { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .topbar .badge { min-width: 0; flex-shrink: 1; }
 .picker-sep { padding: 10px 16px 6px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); border-top: 1px solid var(--iron-3); }
+
+/* Rutinas predefinidas */
+.tpl-family { display: flex; flex-direction: column; gap: 2px; margin: 0 4px 8px; }

@@ -144,6 +144,7 @@ Se muestra siempre como **intervalo**. Se usa el peso corporal registrado más c
 - «Añadir a mis ejercicios» crea un ejercicio propio vinculado (o abre el que ya lo está). Si ya existe uno con el mismo nombre, se añade el sufijo «(biblioteca)».
 - **Alternativas** (para variar, no por lesión): mismo patrón de movimiento primero (+100), después músculos principales en común (+10 cada uno) y, a igualdad, material distinto (+1). Mínimo un músculo principal en común. El cardio solo se alterna con cardio. Máximo 6.
 - **«Añadir ejercicio»** (rutina, entrenamiento o sesión histórica) muestra primero los ejercicios propios y debajo, bajo «Biblioteca», las entradas que coinciden con la búsqueda y aún no están vinculadas a ningún ejercicio propio (`pickableLibrary`). Elegir una crea el ejercicio propio vinculado y lo añade en el mismo paso.
+- Los nombres siguen el vocabulario de gimnasio en España (mariposa, mariposa inversa, remo horizontal, pulldown, remo bajo, remo en T), con el nombre en inglés o alternativo como alias.
 - Tests: `tests/unit/library.test.ts`.
 
 ## 14. Cardio
@@ -172,3 +173,13 @@ Sustituye a la estimación global de §7 cuando la sesión tiene series o tramos
 - Valor por músculo = Σ series objetivo del ejercicio en la rutina × 1 si es músculo principal, × 0,5 si es secundario. Solo cuentan los ejercicios vinculados a la biblioteca; el cardio nunca cuenta. Los ejercicios sin vincular se avisan aparte.
 - Color en 4 niveles por cuartos respecto al músculo más trabajado de la rutina (nivel = ⌈valor / máximo × 4⌉); gris = sin trabajo. Debajo, la lista ordenada con barras y los músculos sin trabajo.
 - Es una función pura (`src/domain/muscleMap.ts`); no se guarda nada. Tests: `tests/unit/muscleMap.test.ts`.
+
+## 17. Rutinas predefinidas
+
+- Catálogo fijo dentro de la app (`src/domain/templates.ts`), como la biblioteca: no se guarda en la base de datos ni se sincroniza. Más de 20 rutinas en 9 familias: full body, torso/pierna, upper 1 empujes / upper 2 tracciones, empuje/tracción/pierna, por grupos musculares, core (sola, + lower, + upper), glúteo y pierna, express y cardio + fuerza.
+- La pantalla Rutinas tiene dos bloques: «Mis rutinas» (las propias, que forman la secuencia) y «Rutinas predefinidas» (no entran en la secuencia).
+- **Usar una plantilla la copia como rutina propia** al final de la secuencia, con las series, repeticiones y descansos de la plantilla (el incremento y la progresión salen de la ficha del ejercicio; el cardio usa sus objetivos fijos, §14). A partir de ahí es una rutina normal: cambiar la plantilla en una versión futura no la modifica.
+- Si el nombre ya existe se añade «(2)», «(3)»… (`freeRoutineName`). En las familias que son un programa (full body, torso/pierna, upper, push/pull/legs, grupos musculares) se puede añadir el programa completo de una vez.
+- **Sin duplicar ejercicios ni partir historiales** (`resolveExercise`): para cada ejercicio se usa el propio vinculado a esa entrada de la biblioteca; si no hay, uno propio sin vincular cuyo nombre corresponde (`matchByName`), sin modificarlo; si tampoco, se crea desde la biblioteca (`addFromLibrary`).
+- No hay campos nuevos: se crean rutinas y ejercicios con el formato de siempre.
+- Tests: `tests/unit/templates.test.ts`.
