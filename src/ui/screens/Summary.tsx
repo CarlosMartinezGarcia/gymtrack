@@ -1,6 +1,6 @@
 import { cardioLine, isCardio, isDoneCardio } from '../../domain/cardio';
 import { all, get } from '../../data/store';
-import { history, sessionDuration, sessionExercises, setsOf, recommendationFor } from '../../data/queries';
+import { history, sessionCalories, sessionDuration, sessionExercises, setsOf, recommendationFor } from '../../data/queries';
 import { updateSession } from '../../data/actions';
 import { estimateCalories, INTENSITY_LABEL } from '../../domain/calories';
 import { sessionMetrics, sessionPRs, volume } from '../../domain/metrics';
@@ -18,7 +18,9 @@ export function Summary({ id }: { id: string }) {
   const ses = sessionExercises(id);
   const validSets = all('sets').filter((x) => x.sessionId === id && isValidSet(x));
   const dur = sessionDuration(s);
-  const kcal = estimateCalories(dur, s.intensity, all('bodyweights'), s.startedAt);
+  const byEx = sessionCalories(id);
+  const kcal = byEx ? { low: byEx.low, high: byEx.high, orientative: !byEx.weighed } : estimateCalories(dur, s.intensity, all('bodyweights'), s.startedAt);
+  const exKcal = new Map(byEx?.items.map((x) => [x.key, x]) ?? []);
   const mixedUnits = new Set(ses.map((se) => get('exercises', se.exerciseId)?.unit ?? 'kg')).size > 1;
 
   return (
@@ -32,7 +34,9 @@ export function Summary({ id }: { id: string }) {
         <div className="stat"><div className="l">Volumen total</div><div className="v">{mixedUnits ? '—' : fmt(volume(validSets), 0)}</div><div className="small muted">{mixedUnits ? 'Unidades mezcladas' : 'kg × reps, series válidas'}</div></div>
         <div className="stat"><div className="l">Calorías estimadas</div><div className="v">{kcal ? `${kcal.low}–${kcal.high}` : '—'}</div><div className="small muted">{kcal?.orientative ? 'Orientativo' : 'kcal, intervalo'}</div></div>
       </div>
-      {kcal && <p className="tiny faint" style={{ margin: '8px 4px' }}>Estimación con METs de entrenamiento de fuerza: {kcal.basis}. No es una medición.</p>}
+      {byEx
+        ? <p className="tiny faint" style={{ margin: '8px 4px' }}>Suma por ejercicio con METs de cada ejercicio, tu peso ({byEx.weighed ? `${fmt(byEx.bodyKg)} kg` : `sin registrar, se usan ${byEx.bodyKg} kg`}), las series, los kilos levantados y los minutos de cardio. No es una medición.</p>
+        : kcal && 'basis' in kcal && <p className="tiny faint" style={{ margin: '8px 4px' }}>Estimación con METs de entrenamiento de fuerza: {kcal.basis}. No es una medición.</p>}
       <div className="chips" style={{ margin: '8px 0' }}>
         <span className="small muted" style={{ alignSelf: 'center' }}>Intensidad:</span>
         {(['light', 'moderate', 'vigorous'] as Intensity[]).map((k) => (
@@ -53,7 +57,7 @@ export function Summary({ id }: { id: string }) {
         const done = setsOf(se.id).filter(isValidSet);
         return (
           <div key={se.id} className="card">
-            <div className="row spread"><h3>{ex?.name}</h3>{prs.length > 0 && <span className="badge pr"><Icon name="star" fill size={13} /> {prs.length} récord{prs.length > 1 ? 's' : ''}</span>}</div>
+            <div className="row spread"><h3>{ex?.name}{exKcal.get(se.id) ? <span className="small muted" style={{ fontWeight: 400 }}> · {exKcal.get(se.id)!.low}–{exKcal.get(se.id)!.high} kcal</span> : null}</h3>{prs.length > 0 && <span className="badge pr"><Icon name="star" fill size={13} /> {prs.length} récord{prs.length > 1 ? 's' : ''}</span>}</div>
             <p className="small muted num" style={{ margin: '4px 0 8px' }}>{isCardio(ex) ? (setsOf(se.id).filter(isDoneCardio).map(cardioLine).join(' + ') || 'Sin tramos hechos') : done.length ? `${setsLine(done)} ${unit}` : 'Sin series válidas'}</p>
             {cur && prev && (
               <div className="small">

@@ -153,3 +153,14 @@ Se muestra siempre como **intervalo**. Se usa el peso corporal registrado más c
 - Un tramo se completa con minutos > 0. Al empezar una sesión se precarga con los valores del último tramo hecho con ese ejercicio. Al finalizar la sesión, los tramos pendientes se eliminan aunque estén precargados.
 - **Fase según la posición** (no se guarda): antes del primer ejercicio de fuerza = calentamiento; después del último = enfriamiento; entre medias o en una sesión solo de cardio = cardio. Al añadir un cardio a una rutina o sesión con ejercicios, la app pregunta si va al principio o al final.
 - Tests: `tests/unit/cardio.test.ts`.
+
+## 15. Calorías por ejercicio
+
+Sustituye a la estimación global de §7 cuando la sesión tiene series o tramos hechos (si no, se mantiene §7). Siempre es un intervalo y una estimación.
+
+- **Peso corporal**: el registrado más cercano anterior a la sesión (§7); sin registros, 70 kg y se marca como orientativo.
+- **Cardio**: MET × kg × minutos registrados, ±10 %. MET por máquina e intensidad (Compendium, tabla `CARDIO_MET`; sin intensidad se usa media). En la cinta con velocidad se usa la ecuación del ACSM (caminar < 8 km/h: VO2 = 0,1·v + 1,8·v·i + 3,5; correr: 0,2·v + 0,9·v·i + 3,5; v en m/min). Inclinación: 0 = 0 %, baja = 3 %, media = 7 %, alta = 12 %.
+- **Fuerza**: MET del ejercicio en la biblioteca (6,0 multiarticular grande, 5,0 multiarticular de tren superior, 3,5 aislamiento, 3,8 core; 4,5 si no está vinculado) × kg × tiempo estimado. Tiempo = 45 s por serie válida + descanso configurado entre series (máx. 5 min). Si el tiempo de fuerza estimado supera la duración real de la sesión menos el cardio, se ajusta proporcionalmente. Intervalo −15 % / +10 %.
+- **Kilos levantados**: se suma el trabajo mecánico Σ(carga × reps × 9,81 × 0,5 m) / 25 % de eficiencia. Es pequeño frente al gasto total, pero hace que más carga = más gasto.
+- Total de la sesión = suma de los ejercicios.
+- Tests: `tests/unit/exerciseCalories.test.ts`.
