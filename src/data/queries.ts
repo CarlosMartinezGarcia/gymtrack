@@ -1,7 +1,11 @@
 // Consultas derivadas. Todo se recalcula desde los datos originales.
 import { all, get } from './store';
 import { alive, DEFAULT_PROGRESSION, type Exercise, type ExerciseTargets, type Profile, type RoutineExercise, type Session, type SessionExercise, type WorkSet } from '../domain/types';
-import { exerciseHistory, type ExerciseSessionEntry } from '../domain/validity';
+import { exerciseHistory, isValidSet, type ExerciseSessionEntry } from '../domain/validity';
+import { estimateByExercise, type CalorieItem, type SessionEstimate } from '../domain/exerciseCalories';
+import { FALLBACK_WEIGHT_KG, weightAt } from '../domain/calories';
+import { cardioMachine, isCardio, isDoneCardio } from '../domain/cardio';
+import { libraryExercise } from '../domain/library';
 import { recommend, type Recommendation } from '../domain/progression';
 import { nextRoutine } from '../domain/sequence';
 
@@ -76,4 +80,26 @@ export function recommendationFor(exerciseId: string, cfg: ExerciseTargets, befo
 
 export function sessionDuration(s: Session, now = Date.now()): number {
   return Math.max(0, (s.endedAt ?? now) - s.startedAt);
+}
+
+/** Calorías por ejercicio de una sesión (§15). Null si no hay nada hecho. */
+export function sessionCalories(sessionId: string): (SessionEstimate & { bodyKg: number; weighed: boolean }) | null {
+  const s = get('sessions', sessionId);
+  if (!s) return null;
+  const ref = weightAt(all('bodyweights'), s.startedAt);
+  const bodyKg = ref?.weightKg ?? FALLBACK_WEIGHT_KG;
+  const items: CalorieItem[] = [];
+  for (const se of sessionExercises(sessionId)) {
+    const ex = get('exercises', se.exerciseId);
+    const sets = setsOf(se.id);
+    if (isCardio(ex)) {
+      const tramos = sets.filter(isDoneCardio).map((t) => ({ durationMin: t.durationMin!, intensity: t.cardioIntensity ?? null, speedKmh: t.speedKmh ?? null, incline: t.incline ?? null }));
+      if (tramos.length) items.push({ kind: 'cardio', key: se.id, machine: cardioMachine(ex), tramos });
+    } else {
+      const done = sets.filter(isValidSet).map((x) => ({ weight: x.weight ?? 0, reps: x.reps ?? 0 }));
+      if (done.length) items.push({ kind: 'strength', key: se.id, met: libraryExercise(ex?.libraryId)?.met ?? null, sets: done, restSec: se.restSec });
+    }
+  }
+  if (!items.length) return null;
+  return { ...estimateByExercise(items, bodyKg, sessionDuration(s) / 60000), bodyKg, weighed: !!ref };
 }

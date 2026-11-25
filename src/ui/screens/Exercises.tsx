@@ -9,6 +9,8 @@ import { Icon } from '../components/Icon';
 import { Segment } from './Routines';
 import { parseNum, relDay } from '../format';
 import { LIBRARY, libraryExercise, matchByName } from '../../domain/library';
+import { isCardio } from '../../domain/cardio';
+import { DEFAULT_PROGRESSION } from '../../domain/types';
 
 /** Vincula el ejercicio con la biblioteca (músculos, técnica y alternativas). */
 function LibraryLink({ libraryId, name, onChange }: { libraryId: string | null; name: string; onChange: (id: string | null) => void }) {
@@ -152,12 +154,16 @@ export function ExerciseEditor({ id }: { id: string }) {
               {Object.entries(KIND_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
             </select></label>
         </div>
-        <LibraryLink libraryId={v.libraryId ?? null} name={v.name} onChange={(libraryId) => set({ libraryId })} />
+        <LibraryLink libraryId={v.libraryId ?? null} name={v.name} onChange={(libraryId) => set({ libraryId, ...(libraryExercise(libraryId)?.equipment === 'cardio' ? A.CARDIO_TARGETS : {}) })} />
+        <label className="switch"><span>Ejercicio de cardio<br /><span className="tiny muted">Se apunta en minutos e intensidad (y velocidad e inclinación en la cinta), no en kilos y repeticiones</span></span>
+          <input type="checkbox" checked={isCardio(v)} disabled={libraryExercise(v.libraryId)?.equipment === 'cardio'} onChange={(e) => set(e.target.checked ? { ...A.CARDIO_TARGETS } : { mode: null, sets: 3, repMin: 8, repMax: 12, restSec: 120, progression: { ...DEFAULT_PROGRESSION } })} /></label>
         <label className="field"><span>Unidad de carga</span>
           <select className="input" value={v.unit} onChange={(e) => set({ unit: e.target.value as LoadUnit })}><option value="kg">kg</option><option value="lb">lb</option></select></label>
         {(v.kind === 'bodyweight' || v.kind === 'assisted') && <p className="notice small">En este tipo de ejercicio registra solo la carga añadida (0 si no hay). El volumen y el 1RM estimado no incluyen tu peso corporal y no son comparables con ejercicios con carga externa.</p>}
-        <div className="section-title" style={{ marginTop: 10 }}>Valores por defecto al añadirlo a una rutina</div>
-        <TargetsForm value={v} unit={v.unit} onChange={(t) => set(t)} />
+        {!isCardio(v) && <>
+          <div className="section-title" style={{ marginTop: 10 }}>Valores por defecto al añadirlo a una rutina</div>
+          <TargetsForm value={v} unit={v.unit} onChange={(t) => set(t)} />
+        </>}
         <label className="field"><span>Notas y técnica</span><textarea className="input" value={v.notes ?? ''} onChange={(e) => set({ notes: e.target.value })} /></label>
         <button className="btn primary block big" onClick={save}>Guardar</button>
         {!isNew && (

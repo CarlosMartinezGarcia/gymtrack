@@ -1,6 +1,7 @@
+import { cardioPlacement, needsPlacement } from '../cardioPlace';
 import { useState } from 'react';
 import { all, get } from '../../data/store';
-import { sessionDuration, sessionExercises, sessionsSorted, setsOfSession } from '../../data/queries';
+import { sessionCalories, sessionDuration, sessionExercises, sessionsSorted, setsOfSession } from '../../data/queries';
 import * as A from '../../data/actions';
 import { possibleDuplicates } from '../../domain/duplicates';
 import { estimateCalories, INTENSITY_LABEL } from '../../domain/calories';
@@ -70,7 +71,8 @@ export function SessionDetail({ id }: { id: string }) {
   const list = sessionExercises(id);
   const valid = all('sets').filter((x) => x.sessionId === id && isValidSet(x));
   const dur = sessionDuration(s);
-  const kcal = s.status === 'completed' ? estimateCalories(dur, s.intensity, all('bodyweights'), s.startedAt) : null;
+  const byEx = s.status === 'completed' ? sessionCalories(id) : null;
+  const kcal = byEx ?? (s.status === 'completed' ? estimateCalories(dur, s.intensity, all('bodyweights'), s.startedAt) : null);
   const dupes = possibleDuplicates(all('sessions'));
 
   const update = (patch: Parameters<typeof A.updateSession>[1]) => attempt(() => A.updateSession(id, patch));
@@ -132,7 +134,7 @@ export function SessionDetail({ id }: { id: string }) {
         <button className="btn danger block" onClick={remove}><Icon name="trash" size={18} /> Eliminar sesión</button>
       </div>
 
-      {picker && <ExercisePicker onClose={() => setPicker(false)} onPick={async (eid) => { setPicker(false); await attempt(() => A.addExerciseToSession(id, eid)); }} />}
+      {picker && <ExercisePicker onClose={() => setPicker(false)} onPick={async (eid) => { setPicker(false); if (!needsPlacement(eid, sessionExercises(id).length > 0)) { const atStart = false; await attempt(() => A.addExerciseToSession(id, eid, atStart)); return; } const atStart = await cardioPlacement(); if (atStart != null) await attempt(() => A.addExerciseToSession(id, eid, atStart)); }} />}
     </div>
   );
 }

@@ -144,3 +144,30 @@ Se muestra siempre como **intervalo**. Se usa el peso corporal registrado más c
 - «Añadir a mis ejercicios» crea un ejercicio propio vinculado (o abre el que ya lo está). Si ya existe uno con el mismo nombre, se añade el sufijo «(biblioteca)».
 - **Alternativas** (para variar, no por lesión): mismo patrón de movimiento primero (+100), después músculos principales en común (+10 cada uno) y, a igualdad, material distinto (+1). Mínimo un músculo principal en común. El cardio solo se alterna con cardio. Máximo 6.
 - Tests: `tests/unit/library.test.ts`.
+
+## 14. Cardio
+
+- Un ejercicio es de cardio si su campo opcional `mode` vale `'cardio'` o si está vinculado a un cardio de la biblioteca (cinta, bicicleta, elíptica, remo, escaladora). Objetivos fijos: 1 tramo, sin descanso ni progresión.
+- Cada tramo es una fila de `sets` con campos opcionales nuevos: `durationMin` (minutos), `cardioIntensity` (baja, media, alta) y, solo en la cinta, `speedKmh` e `incline` (0, baja, media, alta). `weight` y `reps` quedan vacíos. Son campos nuevos y opcionales: los datos antiguos no necesitan migración.
+- **Nunca cuenta para fuerza**: al no tener peso ni repeticiones, un tramo no es una serie válida (§3), así que no entra en progresión, récords ni volumen. Una sesión solo de cardio no es una sesión válida y no avanza la secuencia.
+- Un tramo se completa con minutos > 0. Al empezar una sesión se precarga con los valores del último tramo hecho con ese ejercicio. Al finalizar la sesión, los tramos pendientes se eliminan aunque estén precargados.
+- **Fase según la posición** (no se guarda): antes del primer ejercicio de fuerza = calentamiento; después del último = enfriamiento; entre medias o en una sesión solo de cardio = cardio. Al añadir un cardio a una rutina o sesión con ejercicios, la app pregunta si va al principio o al final.
+- Tests: `tests/unit/cardio.test.ts`.
+
+## 15. Calorías por ejercicio
+
+Sustituye a la estimación global de §7 cuando la sesión tiene series o tramos hechos (si no, se mantiene §7). Siempre es un intervalo y una estimación.
+
+- **Peso corporal**: el registrado más cercano anterior a la sesión (§7); sin registros, 70 kg y se marca como orientativo.
+- **Cardio**: MET × kg × minutos registrados, ±10 %. MET por máquina e intensidad (Compendium, tabla `CARDIO_MET`; sin intensidad se usa media). En la cinta con velocidad se usa la ecuación del ACSM (caminar < 8 km/h: VO2 = 0,1·v + 1,8·v·i + 3,5; correr: 0,2·v + 0,9·v·i + 3,5; v en m/min). Inclinación: 0 = 0 %, baja = 3 %, media = 7 %, alta = 12 %.
+- **Fuerza**: MET del ejercicio en la biblioteca (6,0 multiarticular grande, 5,0 multiarticular de tren superior, 3,5 aislamiento, 3,8 core; 4,5 si no está vinculado) × kg × tiempo estimado. Tiempo = 45 s por serie válida + descanso configurado entre series (máx. 5 min). Si el tiempo de fuerza estimado supera la duración real de la sesión menos el cardio, se ajusta proporcionalmente. Intervalo −15 % / +10 %.
+- **Kilos levantados**: se suma el trabajo mecánico Σ(carga × reps × 9,81 × 0,5 m) / 25 % de eficiencia. Es pequeño frente al gasto total, pero hace que más carga = más gasto.
+- Total de la sesión = suma de los ejercicios.
+- Tests: `tests/unit/exerciseCalories.test.ts`.
+
+## 16. Mapa de calor muscular
+
+- En cada rutina (y en la ficha de la biblioteca) se muestra una figura de frente y de espalda con los 19 músculos de §13 coloreados.
+- Valor por músculo = Σ series objetivo del ejercicio en la rutina × 1 si es músculo principal, × 0,5 si es secundario. Solo cuentan los ejercicios vinculados a la biblioteca; el cardio nunca cuenta. Los ejercicios sin vincular se avisan aparte.
+- Color en 4 niveles por cuartos respecto al músculo más trabajado de la rutina (nivel = ⌈valor / máximo × 4⌉); gris = sin trabajo. Debajo, la lista ordenada con barras y los músculos sin trabajo.
+- Es una función pura (`src/domain/muscleMap.ts`); no se guarda nada. Tests: `tests/unit/muscleMap.test.ts`.

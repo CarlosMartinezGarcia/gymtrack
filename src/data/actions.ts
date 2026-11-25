@@ -1,5 +1,6 @@
 // Operaciones de escritura. Cada operación compuesta se guarda en una sola transacción.
 import { libraryExercise, MUSCLE_BY_ID } from '../domain/library';
+import { isCardio, isDoneCardio, validateCardio } from '../domain/cardio';
 import { commit, del, get, all, uuid, type Change } from './store';
 import { DEFAULT_PROGRESSION, type Exercise, type ExerciseTargets, type Profile, type Routine, type RoutineExercise, type Session, type SessionExercise, type SessionStatus, type WorkSet, type BodyWeight } from '../domain/types';
 import { PROFILE_ID, byPos, previousPerformance, routineExercises, sessionExercises, setsOf, setsOfSession, profile, targetsFromExercise, recommendationFor } from './queries';
@@ -27,6 +28,9 @@ export function validateTargets(e: Partial<ExerciseTargets>): string | null {
   return null;
 }
 
+/** Objetivos fijos de un ejercicio de cardio: un tramo, sin descanso ni progresión (§14). */
+export const CARDIO_TARGETS = { mode: 'cardio' as const, sets: 1, repMin: 1, repMax: 1, restSec: 0, progression: { ...DEFAULT_PROGRESSION, type: 'none' as const } };
+
 export const newExerciseDefaults = (): ExerciseInput => ({
   name: '', muscleGroup: '', kind: 'free', unit: 'kg', increment: 2.5,
   sets: 3, repMin: 8, repMax: 12, restSec: profile().defaultRestSec, progression: { ...DEFAULT_PROGRESSION }, notes: '',
@@ -51,11 +55,13 @@ export async function addFromLibrary(libraryId: string): Promise<string> {
   if (all('exercises').some((e) => e.name.trim().toLowerCase() === name.toLowerCase())) name = `${name} (biblioteca)`;
   const iso = lib.met <= 3.5;
   const kind: Exercise['kind'] = lib.equipment === 'machine' ? 'machine' : lib.equipment === 'cable' ? 'cable' : lib.equipment === 'bodyweight' ? 'bodyweight' : lib.equipment === 'cardio' ? 'other' : 'free';
+  const cardio = lib.equipment === 'cardio';
   const row = await saveExercise({
     ...newExerciseDefaults(), name, kind, libraryId,
-    muscleGroup: lib.equipment === 'cardio' ? 'Cardio' : MUSCLE_BY_ID[lib.primary[0]].group,
+    muscleGroup: cardio ? 'Cardio' : MUSCLE_BY_ID[lib.primary[0]].group,
     repMin: iso ? 10 : 8, repMax: iso ? 15 : 12,
     increment: lib.equipment === 'dumbbell' ? 2 : 2.5,
+    ...(cardio ? CARDIO_TARGETS : {}),
   });
   return row.id;
 }
@@ -128,11 +134,19 @@ export async function deleteRoutine(id: string) {
   await commit(changes);
 }
 
-export async function addExerciseToRoutine(routineId: string, exerciseId: string) {
+export async function addExerciseToRoutine(routineId: string, exerciseId: string, atStart = false) {
   const e = get('exercises', exerciseId);
   if (!e) throw new Error('Ejercicio no encontrado.');
-  const position = Math.max(-1, ...routineExercises(routineId).map((r) => r.position)) + 1;
-  await commit([{ t: 'routineExercises', row: { routineId, exerciseId, position, ...targetsFromExercise(e) } }]);
+  const list = routineExercises(routineId);
+  if (!atStart) {
+    const position = Math.max(-1, ...list.map((r) => r.position)) + 1;
+    await commit([{ t: 'routineExercises', row: { routineId, exerciseId, position, ...targetsFromExercise(e) } }]);
+    return;
+  }
+  await commit([
+    { t: 'routineExercises', row: { routineId, exerciseId, position: 0, ...targetsFromExercise(e) } },
+    ...list.map((r, i) => ({ t: 'routineExercises', row: { id: r.id, position: i + 1 } }) as Change),
+  ]);
 }
 
 export async function updateRoutineExercise(id: string, patch: Partial<RoutineExercise>) {
@@ -166,11 +180,21 @@ function suggestedSets(exerciseId: string, targets: ExerciseTargets, before: num
   return out;
 }
 
+/** Valores del último tramo de cardio hecho con ese ejercicio, para precargar el siguiente. */
+function lastCardio(exerciseId: string, before: number): Partial<WorkSet> {
+  const last = [...(previousPerformance(exerciseId, before)?.sets ?? [])].reverse().find(isDoneCardio);
+  return last ? { durationMin: last.durationMin, cardioIntensity: last.cardioIntensity ?? null, speedKmh: last.speedKmh ?? null, incline: last.incline ?? null } : {};
+}
+
 function sessionChanges(sessionId: string, sources: Source[], startedAt: number): Change[] {
   const changes: Change[] = [];
   sources.forEach((src, i) => {
     const seId = uuid();
     changes.push({ t: 'sessionExercises', row: { id: seId, sessionId, exerciseId: src.exerciseId, position: i, ...src.targets } });
+    if (isCardio(get('exercises', src.exerciseId))) {
+      changes.push({ t: 'sets', row: { sessionId, sessionExerciseId: seId, exerciseId: src.exerciseId, position: 0, weight: null, reps: null, status: 'pending', warmup: false, ...lastCardio(src.exerciseId, startedAt) } });
+      return;
+    }
     const sug = src.suggestions?.map((s) => ({ ...s, warmup: false })) ?? suggestedSets(src.exerciseId, src.targets, startedAt);
     sug.forEach((s, j) => changes.push({
       t: 'sets', row: {
@@ -219,13 +243,15 @@ export async function startFromSession(baseId: string, countsForSequence: boolea
   return id;
 }
 
-async function _addExerciseToSession(sessionId: string, exerciseId: string) {
+async function _addExerciseToSession(sessionId: string, exerciseId: string, atStart = false) {
   const e = get('exercises', exerciseId);
   const s = get('sessions', sessionId);
   if (!e || !s) throw new Error('No encontrado.');
-  const position = Math.max(-1, ...sessionExercises(sessionId).map((x) => x.position)) + 1;
+  const list = sessionExercises(sessionId);
+  const position = atStart ? 0 : Math.max(-1, ...list.map((x) => x.position)) + 1;
   const changes = sessionChanges(sessionId, [{ exerciseId, targets: targetsFromExercise(e) }], s.startedAt);
   (changes[0].row as Partial<SessionExercise>).position = position;
+  if (atStart) list.forEach((x, i) => changes.push({ t: 'sessionExercises', row: { id: x.id, position: i + 1 } }));
   await commit(changes);
 }
 
@@ -268,6 +294,7 @@ async function _addSet(seId: string): Promise<string> {
       sugWeight: last ? last.weight ?? last.sugWeight ?? null : null,
       sugReps: last ? last.reps ?? last.sugReps ?? null : null,
       status: 'pending', warmup: false,
+      ...(isCardio(get('exercises', se.exerciseId)) && last ? { durationMin: last.durationMin ?? null, cardioIntensity: last.cardioIntensity ?? null, speedKmh: last.speedKmh ?? null, incline: last.incline ?? null } : {}),
     },
   }]);
   return id;
@@ -283,7 +310,7 @@ async function _updateSet(id: string, patch: Partial<WorkSet>) {
   const cur = get('sets', id);
   if (!cur) throw new Error('Serie no encontrada.');
   const next = { ...cur, ...patch };
-  const err = validateSetValues(next.weight, next.reps);
+  const err = validateSetValues(next.weight, next.reps) ?? validateCardio(next);
   if (err) throw new Error(err);
   await commit([{ t: 'sets', row: { id, ...patch } }]);
 }
@@ -291,6 +318,11 @@ async function _updateSet(id: string, patch: Partial<WorkSet>) {
 /** Marca la serie como hecha usando los valores sugeridos si no se escribió nada. */
 async function _completeSet(id: string): Promise<WorkSet> {
   const s = get('sets', id)!;
+  if (isCardio(get('exercises', s.exerciseId))) {
+    if (!(typeof s.durationMin === 'number' && s.durationMin > 0)) throw new Error('Indica los minutos antes de completar el tramo.');
+    const [row] = await commit([{ t: 'sets', row: { id, status: 'done' } }]);
+    return row as WorkSet;
+  }
   const weight = s.weight ?? s.sugWeight ?? null;
   const reps = s.reps ?? s.sugReps ?? null;
   if (weight == null || reps == null || reps <= 0) throw new Error('Indica peso y repeticiones antes de completar la serie.');
@@ -321,7 +353,12 @@ async function _finishSession(id: string, status: Exclude<SessionStatus, 'active
   const changes: Change[] = [{ t: 'sessions', row: { id, status, endedAt: s.endedAt && s.status !== 'active' ? s.endedAt : Date.now(), ...extra } }];
   if (status === 'completed') {
     // Las series pendientes sin datos reales se eliminan para no contaminar el historial.
-    for (const set of setsOfSession(id)) if (set.status === 'pending' && set.weight == null && set.reps == null) changes.push(del('sets', set.id));
+    // Los tramos de cardio pendientes también se eliminan aunque estén precargados (§14).
+    for (const set of setsOfSession(id)) {
+      if (set.status !== 'pending') continue;
+      const cardio = isCardio(get('exercises', set.exerciseId));
+      if (cardio || (set.weight == null && set.reps == null)) changes.push(del('sets', set.id));
+    }
   }
   await commit(changes);
 }
