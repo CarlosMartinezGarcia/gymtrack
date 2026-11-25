@@ -38,6 +38,7 @@ export function ExerciseBlock({ se, mode, open, onToggle, sessionStartedAt, isFi
     const v = await choose(ex?.name ?? 'Ejercicio', [
       ...(!isFirst ? [{ label: 'Mover arriba', value: 'up' }] : []),
       ...(!isLast ? [{ label: 'Mover abajo', value: 'down' }] : []),
+      ...(ex?.libraryId ? [{ label: 'Ver técnica y alternativas', value: 'library' }] : []),
       { label: 'Cambiar por otro ejercicio', value: 'replace' },
       { label: notesOpen ? 'Ocultar notas' : 'Añadir notas', value: 'notes' },
       { label: 'Quitar de la sesión', value: 'remove', kind: 'danger' as const },
@@ -45,6 +46,7 @@ export function ExerciseBlock({ se, mode, open, onToggle, sessionStartedAt, isFi
     if (v === 'up') await A.moveSessionExercise(se.id, -1);
     if (v === 'down') await A.moveSessionExercise(se.id, 1);
     if (v === 'replace') setPicker(true);
+    if (v === 'library' && ex?.libraryId) location.hash = `/library/${ex.libraryId}`;
     if (v === 'notes') setNotesOpen(!notesOpen);
     if (v === 'remove' && await confirm('¿Quitar este ejercicio de la sesión?', `Se eliminarán sus ${sets.length} series de esta sesión. La ficha del ejercicio y el resto del historial no cambian.`, 'Quitar')) {
       await attempt(() => A.removeSessionExercise(se.id));

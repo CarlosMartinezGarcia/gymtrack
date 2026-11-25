@@ -134,3 +134,13 @@ Se muestra siempre como **intervalo**. Se usa el peso corporal registrado más c
 3. Interfaz: inicio, entrenamiento + temporizador, rutinas y ejercicios, historial, progreso, peso, configuración.
 4. PWA: manifest, iconos, service worker.
 5. Verificación de los 14 criterios de aceptación en navegador con pantalla de iPhone.
+
+## 13. Biblioteca de ejercicios
+
+- Catálogo fijo dentro de la app (`src/domain/library/`), no en la base de datos: no se sincroniza ni se exporta, y se actualiza con cada versión. 77 ejercicios habituales de gimnasio (máquina, polea, mancuernas, barra, peso corporal y cardio).
+- Cada entrada tiene: material, patrón de movimiento, músculos principales y secundarios (19 músculos, `muscles.ts`), MET de referencia, colocación, técnica y errores comunes (textos propios) e imágenes de inicio y final.
+- Imágenes: Free Exercise DB (dominio público), reducidas a 480 px y servidas desde la propia app (`public/ex/`), así que el service worker las precarga y funcionan sin conexión.
+- **Vínculo con los ejercicios propios**: campo opcional `libraryId` en `exercises`. Es un campo nuevo y opcional: los datos antiguos siguen siendo válidos sin migración y la identidad e historial del ejercicio no cambian. La app sugiere el vínculo por nombre (`matchByName`: nombre o alias sin tildes ni mayúsculas; si no, el alias más largo contenido en el nombre) y el usuario lo confirma y guarda.
+- «Añadir a mis ejercicios» crea un ejercicio propio vinculado (o abre el que ya lo está). Si ya existe uno con el mismo nombre, se añade el sufijo «(biblioteca)».
+- **Alternativas** (para variar, no por lesión): mismo patrón de movimiento primero (+100), después músculos principales en común (+10 cada uno) y, a igualdad, material distinto (+1). Mínimo un músculo principal en común. El cardio solo se alterna con cardio. Máximo 6.
+- Tests: `tests/unit/library.test.ts`.
