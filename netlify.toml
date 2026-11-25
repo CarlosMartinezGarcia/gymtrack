@@ -4,6 +4,9 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  # Supabase de GymTrack. La clave anon es pública por diseño; la protección la da la seguridad por filas (supabase/schema.sql).
+  GT_SUPABASE_URL = "https://fajnyunozuvguuzdneli.supabase.co"
+  GT_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZham55dW5venV2Z3V1emRuZWxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU2MDQxNTYsImV4cCI6MjExMTE4MDE1Nn0.uWWnSHwAB-VDHF1onVlQUilw5mH9q49Y-J1QL4K6Yqg"
 
 [[headers]]
   for = "/index.html"
