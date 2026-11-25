@@ -14,6 +14,8 @@ import { fmt, fmtRest } from '../format';
 import { startRoutine } from '../startFlow';
 import { TargetsForm } from './Exercises';
 import { cardioPhases, isCardio, PHASE_LABEL } from '../../domain/cardio';
+import { muscleLoad } from '../../domain/muscleMap';
+import { BodyMap } from '../components/BodyMap';
 
 export function Segment({ value }: { value: 'routines' | 'exercises' | 'library' }) {
   return (
@@ -122,6 +124,19 @@ export function RoutineEditor({ id }: { id: string }) {
           }} />
       ) : <div className="card empty small">Añade los ejercicios de esta rutina.</div>}
       <button className="btn block" style={{ marginTop: 10 }} onClick={() => setPicker(true)}><Icon name="plus" /> Añadir ejercicio</button>
+
+      {list.length > 0 && (() => {
+        const map = muscleLoad(list.map((re) => { const ex = get('exercises', re.exerciseId); return { libraryId: ex?.libraryId, sets: re.sets, cardio: isCardio(ex) }; }));
+        return (
+          <>
+            <div className="section-title">Músculos de la rutina</div>
+            <div className="card">
+              {map.max > 0 ? <BodyMap load={map.load} max={map.max} /> : <p className="small muted" style={{ margin: 0 }}>Vincula tus ejercicios con la biblioteca (ficha del ejercicio) para ver qué músculos trabaja esta rutina.</p>}
+              {map.unlinked > 0 && map.max > 0 && <p className="tiny" style={{ color: 'var(--yellow)', marginBottom: 0 }}>{map.unlinked} ejercicio{map.unlinked > 1 ? 's' : ''} sin vincular a la biblioteca no cuenta{map.unlinked > 1 ? 'n' : ''} en el mapa.</p>}
+            </div>
+          </>
+        );
+      })()}
 
       <label className="field" style={{ marginTop: 18 }}><span>Notas</span>
         <textarea className="input" defaultValue={r.notes ?? ''} key={`no${r.updatedAt}`} onBlur={(e) => { if (e.target.value !== (r.notes ?? '')) void saveField({ notes: e.target.value }); }} />

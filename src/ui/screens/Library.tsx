@@ -9,6 +9,8 @@ import { useData, go, back } from '../hooks';
 import { attempt } from '../components/Dialogs';
 import { Icon } from '../components/Icon';
 import { Segment } from './Routines';
+import { muscleLoad } from '../../domain/muscleMap';
+import { BodyMap } from '../components/BodyMap';
 
 const GROUPS = [...MUSCLE_GROUPS, 'Cardio'];
 const EQUIPMENT = Object.keys(EQUIPMENT_LABEL).filter((k) => k !== 'cardio') as Equipment[];
@@ -101,6 +103,7 @@ export function LibraryDetail({ id }: { id: string }) {
         {e.equipment !== 'cardio' && e.secondary.map((m) => <span key={m} className="badge">{MUSCLE_BY_ID[m].name}</span>)}
       </div>
       {e.equipment !== 'cardio' && <p className="tiny muted">Verde: músculo principal. Gris: secundario.</p>}
+      {e.equipment !== 'cardio' && (() => { const m = muscleLoad([{ libraryId: e.id, sets: 1, cardio: false }]); return <div className="card" style={{ marginTop: 10 }}><BodyMap load={m.load} max={m.max} compact /></div>; })()}
       <Steps title="Colocación" items={e.setup} />
       <Steps title="Técnica" items={e.technique} />
       <Steps title="Errores comunes" items={e.errors} />

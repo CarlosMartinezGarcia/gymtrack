@@ -164,3 +164,10 @@ Sustituye a la estimación global de §7 cuando la sesión tiene series o tramos
 - **Kilos levantados**: se suma el trabajo mecánico Σ(carga × reps × 9,81 × 0,5 m) / 25 % de eficiencia. Es pequeño frente al gasto total, pero hace que más carga = más gasto.
 - Total de la sesión = suma de los ejercicios.
 - Tests: `tests/unit/exerciseCalories.test.ts`.
+
+## 16. Mapa de calor muscular
+
+- En cada rutina (y en la ficha de la biblioteca) se muestra una figura de frente y de espalda con los 19 músculos de §13 coloreados.
+- Valor por músculo = Σ series objetivo del ejercicio en la rutina × 1 si es músculo principal, × 0,5 si es secundario. Solo cuentan los ejercicios vinculados a la biblioteca; el cardio nunca cuenta. Los ejercicios sin vincular se avisan aparte.
+- Color en 4 niveles por cuartos respecto al músculo más trabajado de la rutina (nivel = ⌈valor / máximo × 4⌉); gris = sin trabajo. Debajo, la lista ordenada con barras y los músculos sin trabajo.
+- Es una función pura (`src/domain/muscleMap.ts`); no se guarda nada. Tests: `tests/unit/muscleMap.test.ts`.
