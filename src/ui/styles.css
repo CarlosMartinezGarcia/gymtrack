@@ -267,3 +267,65 @@ details.why summary::-webkit-details-marker { display: none; }
 .bodymap-bar { height: 8px; background: var(--iron-3); border-radius: 4px; overflow: hidden; }
 .bodymap-bar i { display: block; height: 100%; border-radius: 4px; }
 .bodymap-row .num { text-align: right; }
+
+/* ================= Tema 2 (25/11/2026): más contraste, profundidad y acento ================= */
+:root {
+  --iron: #0d1015;
+  --iron-2: #171c24;
+  --iron-3: #232a35;
+  --line: #2e3744;
+  --text: #f2f5f8;
+  --muted: #9aa6b4;
+  --faint: #677384;
+  --blue: #3d7cff;
+  --accent-2: #7b5cff;
+  --grad: linear-gradient(135deg, #3d7cff 0%, #7b5cff 100%);
+  --edge: rgba(255,255,255,.06);
+  --shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+body { background: radial-gradient(120% 60% at 50% -10%, #1b2440 0%, var(--iron) 55%) fixed, var(--iron); }
+h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; }
+.topbar h1 { font-size: 26px; font-weight: 800; }
+.section-title { text-transform: uppercase; letter-spacing: .06em; font-size: 12px; color: var(--faint); }
+
+.card, .list, .stat, .ex, .next-card { background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,0) 60%), var(--iron-2); border: 1px solid var(--edge); box-shadow: var(--shadow); }
+.card.flat { box-shadow: none; }
+
+.btn { border-radius: 14px; }
+.btn.primary { background: var(--grad); box-shadow: 0 6px 18px rgba(61,124,255,.35); }
+.btn.primary:active { box-shadow: 0 2px 8px rgba(61,124,255,.3); }
+.btn.big { border-radius: 18px; }
+
+.input, select.input, textarea.input { background: #0a0d11; border-color: var(--line); }
+.input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(61,124,255,.25); }
+
+.chip.on { background: var(--blue); border-color: var(--blue); color: #fff; }
+.segmented { background: #0a0d11; border: 1px solid var(--edge); }
+.segmented button.on { background: var(--grad); color: #fff; box-shadow: 0 4px 12px rgba(61,124,255,.3); }
+.switch input:checked { background: var(--blue); }
+
+/* Inicio: tarjeta principal con degradado */
+.next-card { background: var(--grad); border: 0; box-shadow: 0 14px 34px rgba(61,124,255,.35); color: #fff; padding: 20px; }
+.next-card::before { display: none; }
+.next-card::after { content: ""; position: absolute; right: -40px; top: -40px; width: 160px; height: 160px; border-radius: 50%; background: rgba(255,255,255,.10); pointer-events: none; }
+.next-card .muted { color: rgba(255,255,255,.82); }
+.next-card .btn.primary { background: #fff; color: #1d2b5c; box-shadow: 0 6px 16px rgba(0,0,0,.2); }
+.next-card .btn.ghost { color: #fff; }
+.next-name { font-size: 32px; }
+.stat { position: relative; overflow: hidden; }
+.stat::before { content: ""; position: absolute; left: 0; top: 0; right: 0; height: 3px; background: var(--grad); opacity: .7; }
+
+/* Navegación con indicador */
+.nav { background: rgba(13,16,21,.86); border-top: 1px solid var(--edge); }
+.nav a { position: relative; }
+.nav a.on::before { content: ""; position: absolute; top: 6px; width: 44px; height: 30px; border-radius: 15px; background: rgba(61,124,255,.16); }
+.nav a svg { position: relative; }
+.live-bar { background: var(--grad); }
+
+/* Entrenamiento */
+.wk-head { background: rgba(13,16,21,.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.ex.complete { border-color: rgba(69,196,134,.35); }
+.lib-frames { box-shadow: var(--shadow); }
+.topbar h1 { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.topbar .badge { min-width: 0; flex-shrink: 1; }
+.picker-sep { padding: 10px 16px 6px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); border-top: 1px solid var(--iron-3); }

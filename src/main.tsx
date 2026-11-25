@@ -23,7 +23,19 @@ async function boot() {
   window.addEventListener('pointerdown', unlockAudio, { once: true, capture: true });
 
   if ('serviceWorker' in navigator && !location.search.includes('nosw')) {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
+    // Si ya había una versión instalada, al activarse la nueva se recarga una vez para mostrarla sin esperar a la siguiente apertura.
+    const hadController = !!navigator.serviceWorker.controller;
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || reloaded || activeWorkoutOpen()) return;
+      reloaded = true;
+      location.reload();
+    });
+    navigator.serviceWorker.register('./sw.js').then((r) => r.update()).catch(() => {});
   }
+}
+/** No recargar en mitad de la pantalla de entrenamiento (los datos están guardados, pero evita sustos). */
+function activeWorkoutOpen() {
+  return location.hash.startsWith('#/workout');
 }
 void boot();

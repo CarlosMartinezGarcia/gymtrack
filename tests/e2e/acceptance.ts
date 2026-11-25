@@ -48,6 +48,7 @@ async function createRoutine(name: string, exercises: string[]) {
     await page.getByRole('button', { name: 'Añadir ejercicio' }).click();
     await page.getByPlaceholder('Buscar o escribir un nombre nuevo').fill(ex);
     await page.locator('.sheet .list-item', { hasText: new RegExp(`^${ex}`) }).first().click();
+    await page.locator('.sortable-item', { hasText: ex }).first().waitFor();
   }
 }
 const finish = async () => {

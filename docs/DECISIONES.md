@@ -143,6 +143,7 @@ Se muestra siempre como **intervalo**. Se usa el peso corporal registrado más c
 - **Vínculo con los ejercicios propios**: campo opcional `libraryId` en `exercises`. Es un campo nuevo y opcional: los datos antiguos siguen siendo válidos sin migración y la identidad e historial del ejercicio no cambian. La app sugiere el vínculo por nombre (`matchByName`: nombre o alias sin tildes ni mayúsculas; si no, el alias más largo contenido en el nombre) y el usuario lo confirma y guarda.
 - «Añadir a mis ejercicios» crea un ejercicio propio vinculado (o abre el que ya lo está). Si ya existe uno con el mismo nombre, se añade el sufijo «(biblioteca)».
 - **Alternativas** (para variar, no por lesión): mismo patrón de movimiento primero (+100), después músculos principales en común (+10 cada uno) y, a igualdad, material distinto (+1). Mínimo un músculo principal en común. El cardio solo se alterna con cardio. Máximo 6.
+- **«Añadir ejercicio»** (rutina, entrenamiento o sesión histórica) muestra primero los ejercicios propios y debajo, bajo «Biblioteca», las entradas que coinciden con la búsqueda y aún no están vinculadas a ningún ejercicio propio (`pickableLibrary`). Elegir una crea el ejercicio propio vinculado y lo añade en el mismo paso.
 - Tests: `tests/unit/library.test.ts`.
 
 ## 14. Cardio
